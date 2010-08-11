@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <extension
+         id="foxBuilder"
+         name="Fox Builder"
+         point="org.eclipse.core.resources.builders">
+      <builder
+            hasNature="true">
+         <run
+               class="foxvalidator.builder.FoxBuilder">
+         </run>
+      </builder>
+   </extension>
+   <extension
+         id="foxNature"
+         name="Fox Nature"
+         point="org.eclipse.core.resources.natures">
+      <runtime>
+         <run
+               class="foxvalidator.builder.FoxNature">
+         </run>
+      </runtime>
+      <builder
+            id="FoxValidator.foxBuilder">
+      </builder>
+   </extension>
+   <extension
+         point="org.eclipse.ui.popupMenus">
+      <objectContribution
+            adaptable="true"
+            objectClass="org.eclipse.core.resources.IProject"
+            nameFilter="*"
+            id="FoxValidator.contribution1">
+         <action
+               label="Add/Remove FOX Builder"
+               class="foxvalidator.builder.ToggleNatureAction"
+               menubarPath="additions"
+               enablesFor="+"
+               id="FoxValidator.addRemoveNatureAction">
+         </action>
+      </objectContribution>
+   </extension>
+   <extension
+         id="xmlProblem"
+         name="XML Problem"
+         point="org.eclipse.core.resources.markers">
+      <super
+            type="org.eclipse.core.resources.problemmarker">
+      </super>
+      <persistent
+            value="true">
+      </persistent>
+      <super
+            type="org.eclipse.core.resources.textmarker">
+      </super>
+   </extension>
+<extension
+      point="org.eclipse.ui.ide.markerResolution">
+   <markerResolutionGenerator
+         class="foxvalidator.quickfix.FoxQuickFix"
+         markerType="FoxValidator.xmlProblem">
+   </markerResolutionGenerator>
+   <markerResolutionGenerator
+         class="foxvalidator.quickfix.FoxQuickFix"
+         markerType="org.eclipse.core.resources.problemmarker">
+   </markerResolutionGenerator>
+</extension>
+<extension
+      point="org.eclipse.ui.popupMenus">
+   <objectContribution
+         adaptable="false"
+         id="FoxValidator.HackNamespacesContribution"
+         objectClass="org.eclipse.core.resources.IFile">
+      <action
+            class="foxvalidator.HackNamespaces"
+            id="FoxValidator.hackNamespacesAction"
+            label="Toggle Unique Namespaces"
+            menubarPath="additions">
+      </action>
+   </objectContribution>
+</extension>
+<extension point="org.eclipse.wst.sse.ui.completionProposal">
+  <proposalComputer
+      activate="true"
+      categoryId="org.eclipse.wst.xml.ui.proposalCategory.xmlTemplates"
+      class="foxvalidator.contentassist.FoxContentAssist"
+      id="org.eclipse.wst.xml.ui.proposalComputer.xmlTemplates">
+    <contentType
+        id="org.eclipse.core.runtime.xml">
+    </contentType>
+  </proposalComputer>
+</extension>
+
+</plugin>
