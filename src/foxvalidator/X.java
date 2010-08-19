@@ -526,11 +526,11 @@ class FoxNamespaceContext implements NamespaceContext
     }
     if (pPrefix.startsWith("fox"))
     {
-  		if(pPrefix.equals("foxg")) {
-  			return "http://www.og.dti.gov/fox_global";
-  		}
   		if(pPrefix.equals("fox")) {
   			return "http://www.og.dti.gov/fox";
+  		}
+  		if(pPrefix.equals("foxg")) {
+  			return "http://www.og.dti.gov/fox_global";
   		}
     	for(int i=2;i<100;i++)
     	{

@@ -1,0 +1,32 @@
+# Copy the files from the schema folder to "C:/pvcswork/Fox/source/altova_xmlspy/schema" and replace the current files (This is a valid schema, required for schema auto-complete in eclipse, the only difference is you can no longer use <fm:state action="pop"/>, you ''must'' use <fm:state-pop/> instead).
+# Go to http://www.eclipse.org/downloads/ and download the Eclipse IDE for Java EE Developers (Helios) package - You can also use a different package as long as you install the WST XML tools plugin.
+# Extract to a folder of your choice.
+# Open the newly create eclipse folder.
+# Put the FoxValidator into the dropins folder.
+# Run eclipse.exe and choose a workspace (the default should be fine).
+# Go to Window | Preferences, then XML | XML Files | Editor and tick "Indent using spaces" and set "Indentation" size to 2.
+# Go to XML | XML Catalog and add an entry for "C:\pvcswork\Fox\source\altova_xmlspy\schema\fox_schema.xsd" with "Key Type" of "Schema Location" and "Key" of "C:\pvcswork\Fox\source\altova_xmlspy\schema\fox_schema.xsd". (This allows XML Schema auto-complete for FOX - things like dropdown list for fox:widget values, list of html tags in fm:set-buffer)
+# Add a second entry for "C:\pvcswork\Fox\source\altova_xmlspy\schema\fox_schema.xsd" with a "Key Type" of "Schema Location" and "Key" of "C:/pvcswork/Fox/source/altova_xmlspy/schema/fox_schema.xsd". (This just has one for the path with / as they could be used instead of \)
+# Go to File | New | Project... then select General | Project and click Next.
+# Name your project (for example as CoreModules)
+# Untick "Use default location" and browse to "C:\pvcswork\CodeSource\FoxModules\CoreModules" then click finish
+# Right-click your project and click "Add/Remove FOX Builder", this will now build all the project files with a green progress bar and percentage complete in the bottom right corner. (This allows warnings when action/state/etc names are not found in the current or libraried modules).
+# Open a FOX module and go to your nearest action reference (for example: <fm:call action=""/>) and hit ctrl+space to get a list of available actions.  This also works on database references, query/api references, state references, etc.
+
+To Update:
+# Close eclipse
+# Go to eclipse/plugins folder
+# Delete old jar
+# Add new jar
+
+Highly Recommended:
+* If you want to disable the XML tools validation (generally gives messages about duplicate namespaces and similar things) then you can right-click the project and go to Properties then Validation and tick "Enable project specific settings" then untick XML Validator for Manual and Build.
+: Even if you disable this you will still get some general XML validation from the FOX builder, however it will not be quite as comprehensive (however it will not throw any duplicate namespace errors so is likely to be a lot more helpful).
+: If you want the XML builder can also be disabled on a workspace wide basis, however then you will not be able to have a separate project for valid XML files.
+** Disabling the XML tools validation will disable validating that namespaces
+Notes:
+* You can change the colour/style of the XML syntax highlighting through Window | Preferences, XML | XML Files | Editor | Syntax Coloring.  I suggest removing italic from attribute values - I found it hard to distinguish between } and ] when it was italicised.
+* If you just want the standard XML auto-complete there is no need to add the FOX plugin to the dropins folder.
+* The plugin jar files contain the source code for that version.
+* SQL syntax highlighting is possible/working, however I have not been able to figure out how to successfully deploy it in a standalone plugin (it requires very minor modifications to two official eclipse plugins, but they use sha1 hashes and signing).
+* Source code is also available at http://github.com/Page-/FOX-Eclipse if anyone's interested.
