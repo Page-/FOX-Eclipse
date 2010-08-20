@@ -92,5 +92,21 @@
     </contentType>
   </proposalComputer>
 </extension>
+	<extension
+		point="org.eclipse.ui.workbench.texteditor.hyperlinkDetectorTargets">
+		<target
+			id="org.eclipse.core.runtime.xml"
+			name="XML Editors">
+		</target>
+	</extension>
+	<extension
+		point="org.eclipse.ui.workbench.texteditor.hyperlinkDetectors">
+		<hyperlinkDetector
+			class="foxvalidator.abstracthyperlinkdetector.AbstractHyperlinkDetector1"
+			id="abstracthyperlinkdetector.AbstractHyperlinkDetector1"
+			name="FOX Hyperlink Detector"
+			targetId="org.eclipse.core.runtime.xml">
+		</hyperlinkDetector>
+   </extension>
 
 </plugin>

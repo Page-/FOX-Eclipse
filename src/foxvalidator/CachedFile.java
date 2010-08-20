@@ -12,11 +12,13 @@ public class CachedFile
 	public final Element mDocElem;
 	public final Map<String,String>[] mValidValues = new Map[X.mValidateChecks.length];
 	public final NodeList[] mCheckNodeList = new NodeList[X.mValidateChecks.length];
+	public final String[] mLines;
 	
-	public CachedFile (String pFilePath, long pLastModified, Element pDocElem)
+	public CachedFile (String pFilePath, long pLastModified, Element pDocElem, String[] pLines)
 	{
 		this.mFilePath = pFilePath;
 		this.mLastModified = pLastModified;
 		this.mDocElem = pDocElem;
+		this.mLines = pLines;
 	}
 }

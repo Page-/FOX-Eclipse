@@ -1,5 +1,9 @@
 package foxvalidator;
 
+import static foxvalidator.X.hackNamespaces;
+import static foxvalidator.X.inputStreamToString;
+import static foxvalidator.X.stringToInputSource;
+
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -40,6 +44,7 @@ import org.eclipse.wst.sse.core.internal.provisional.text.ITextRegionContainer;
 import org.eclipse.wst.xml.core.internal.provisional.document.IDOMNode;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
@@ -248,8 +253,13 @@ public class X {
 		{
 			p("Could not find a cached version: "+mCacheMisses++);
 			Element lDocElem = null;
+			String[] lines = null;
   		try {
-				dal.parse(stringToInputSource(hackNamespaces(inputStreamToString(pFile.getContents(true)))));
+				String fileContentsString = inputStreamToString(pFile.getContents());
+				lines = fileContentsString.split("\n");
+				InputSource fileContents = stringToInputSource(hackNamespaces(fileContentsString));
+				dal.setLines(lines);
+				dal.parse(fileContents);
   			lDocElem = dal.getDocument().getDocumentElement();
 	  	}
   		catch (SAXException e) {
@@ -270,15 +280,56 @@ public class X {
 	    }
 	    else
 	    {
-				lFileToCheck = new CachedFile(pFile.getFullPath().toString(), pFile.getModificationStamp(), lDocElem);
+				lFileToCheck = new CachedFile(pFile.getFullPath().toString(), pFile.getModificationStamp(), lDocElem, lines);
 				gCachedFiles.put(pFile.getFullPath().toString(), lFileToCheck);
 				p("Created cached file");
 	    }
 		}
 		return lFileToCheck;
 	}
+	
+	public static Node getNodeAtPosition(Element pDocElem, int pPosition)
+	{
+		return getNodeAtPosition(pDocElem.getChildNodes(),pPosition);
+	}
 
+	public static Node getNodeAtPosition(NodeList pNodeList, int pPosition)
+	{
+	  for(int i=0;i<pNodeList.getLength();i++)
+	  {
+	  	Node lNode = pNodeList.item(i);
+	  	Node lNextNode = (i+1 < pNodeList.getLength() ? pNodeList.item(i+1) : null);
+	  	if(Integer.valueOf((String)lNode.getUserData("charOffset")) > pPosition) {
+	  		if(lNode.hasAttributes()) {
+	  			Node lNodeFound = getNodeAtPosition(lNode.getAttributes(), pPosition);
+	  			if(lNodeFound!=null) {
+	  				return lNodeFound;
+	  			}
+	  		}
+	  		return lNode;
+	  	}
+	  	if(lNode.hasChildNodes() && lNextNode != null && Integer.valueOf((String)lNextNode.getUserData("charOffset")) > pPosition) {
+	  		Node lNodeFound = getNodeAtPosition(lNode.getChildNodes(), pPosition);
+	  		if(lNodeFound != null) {
+	  			 return lNodeFound;
+	  		}
+	  	}
+	  }
+	  return null;
+  }
 
+	public static Node getNodeAtPosition(NamedNodeMap pNodeList, int pPosition)
+	{
+	  for(int i=0;i<pNodeList.getLength();i++)
+	  {
+	  	Node lNode = pNodeList.item(i);
+	  	if(Integer.valueOf((String)lNode.getUserData("charOffset")) > pPosition) {
+	  		return lNode;
+	  	}
+	  }
+	  return null;
+  }
+	
 	public static InputSource stringToInputSource(String pString)
 	{
 	  return new InputSource(new StringReader(pString));

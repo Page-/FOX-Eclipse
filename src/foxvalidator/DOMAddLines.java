@@ -17,6 +17,8 @@
 
 package foxvalidator;                    
 
+import static foxvalidator.X.getLength;
+
 import org.apache.xerces.parsers.DOMParser;
 import org.apache.xerces.xni.Augmentations;
 import org.apache.xerces.xni.NamespaceContext;
@@ -45,9 +47,10 @@ public class DOMAddLines extends DOMParser {
    /** Print writer. */
    static private boolean NotIncludeIgnorableWhiteSpaces = false;
    private XMLLocator locator; 
-
+   private String[] mLines;
 
    public DOMAddLines() {
+  	 
       //fNodeExpansion = FULL; // faster than: this.setFeature("http://apache.org/xml/features/defer-node-expansion", false);
 
       try {                        
@@ -56,6 +59,11 @@ public class DOMAddLines extends DOMParser {
          System.err.println( "except" + e );
       }
    } // constructor
+   
+   public void setLines(String[] pLines)
+   {
+  	 mLines = pLines;
+   }
 
    /* Methods that we override */
 
@@ -81,11 +89,21 @@ public class DOMAddLines extends DOMParser {
       }
    } //startElement 
    
-   protected Attr createAttrNode(QName attrQName)
+   @Override
+  protected void setCharacterData(boolean sawChars) {
+	  super.setCharacterData(sawChars);
+  }
+
+	protected Attr createAttrNode(QName attrQName)
    {
   	 Attr a = super.createAttrNode(attrQName);
   	 a.setUserData("startLine", String.valueOf( locator.getLineNumber() ), null );
-  	 a.setUserData("charOffset", String.valueOf( locator.getCharacterOffset() ), null );
+ 		int lLineNumber = locator.getLineNumber();
+ 		
+ 		int lCharStart = (lLineNumber==-1?0:getLength(mLines,lLineNumber-1)+mLines[lLineNumber-1].indexOf(a.getName()));
+ 		
+ 		
+  	 a.setUserData("charOffset", String.valueOf( locator.getCharacterOffset() ), null ); //TODO: Get this to be the charOffset for the attribute not for the opening tag.
   	 return a;
    }
    
@@ -99,7 +117,15 @@ public class DOMAddLines extends DOMParser {
 
    /* We override startDocument callback from DocumentHandler */
 
-   public void startDocument(XMLLocator locator, String encoding, 
+   @Override
+  public void characters(XMLString text, Augmentations augs)
+      throws XNIException {
+	  super.characters(text, augs);
+	  fCurrentNode.getLastChild().setUserData( "startLine", String.valueOf( locator.getLineNumber() ), null );
+	  fCurrentNode.getLastChild().setUserData("charOffset", String.valueOf( locator.getCharacterOffset() ), null );
+  }
+
+	public void startDocument(XMLLocator locator, String encoding, 
                              NamespaceContext namespaceContext, Augmentations augs) throws XNIException {
      super.startDocument(locator, encoding, namespaceContext, augs);
      this.locator = locator;

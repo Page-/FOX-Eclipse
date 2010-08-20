@@ -134,13 +134,6 @@ public class FoxBuilder extends IncrementalProjectBuilder
 				XMLErrorHandler reporter = new XMLErrorHandler(lFile);
 				try
 				{
-					String fileContentsString = inputStreamToString(lFile.getContents());
-					String[] lines = fileContentsString.split("\n");
-					InputSource fileContents = stringToInputSource(hackNamespaces(fileContentsString));
-					getParser().parse(fileContents, reporter);
-//					p("---"+fileContents+"---");
-//		      Document doc = db.parse(file.getContents());
-
 					CachedFile lCachedFile = getCachedFile(lFile);
 					
 					List<CachedFile> lFilesToCheck = getFilesToCheck(lFile.getParent().getParent(), lCachedFile);
@@ -162,13 +155,14 @@ public class FoxBuilder extends IncrementalProjectBuilder
 //			      		StringWriter sw = new StringWriter();
 //			      		d.serializeNode(nodeList.item(i), sw, "");
 //			      		p(sw.toString());
+			      		//TODO: This is also done in HyperLink stuff, can we consolidate?
 			      		String lStartLine = (String)lNode.getUserData("startLine");
 			      		if(lStartLine==null) {
 			      			lStartLine = (String)lNode.getParentNode().getUserData("startLine");
 			      		}
 //			      		p(lStartLine);
 			      		int lLineNumber = (lStartLine==null?-1:Integer.parseInt(lStartLine));
-			      		int lCharStart = (lLineNumber==-1?0:getLength(lines,lLineNumber-1)+lines[lLineNumber-1].indexOf(lNode.getTextContent()));
+			      		int lCharStart = (lLineNumber==-1?0:getLength(lCachedFile.mLines,lLineNumber-1)+lCachedFile.mLines[lLineNumber-1].indexOf(lNode.getTextContent()));
 //			      		p(lCharStart);
 			      		int lCharEnd = (lLineNumber==-1?0:lCharStart + lNode.getTextContent().length());
 			      		p(lLineNumber);
