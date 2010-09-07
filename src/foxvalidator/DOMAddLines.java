@@ -48,6 +48,7 @@ public class DOMAddLines extends DOMParser {
    static private boolean NotIncludeIgnorableWhiteSpaces = false;
    private XMLLocator locator; 
    private String[] mLines;
+ 	 private int mExtraOffset;
 
    public DOMAddLines() {
   	 
@@ -85,7 +86,7 @@ public class DOMAddLines extends DOMParser {
       if( node != null )
       {
           node.setUserData( "startLine", String.valueOf( locator.getLineNumber() ), null ); // Save location String into node
-          node.setUserData("charOffset", String.valueOf( locator.getCharacterOffset() ), null );
+          node.setUserData("charOffset", String.valueOf( locator.getCharacterOffset()+mExtraOffset ), null );
       }
    } //startElement 
    
@@ -93,17 +94,23 @@ public class DOMAddLines extends DOMParser {
   protected void setCharacterData(boolean sawChars) {
 	  super.setCharacterData(sawChars);
   }
-
+  
 	protected Attr createAttrNode(QName attrQName)
    {
   	 Attr a = super.createAttrNode(attrQName);
   	 a.setUserData("startLine", String.valueOf( locator.getLineNumber() ), null );
  		int lLineNumber = locator.getLineNumber();
  		
- 		int lCharStart = (lLineNumber==-1?0:getLength(mLines,lLineNumber-1)+mLines[lLineNumber-1].indexOf(a.getName()));
+ 		if(a.getName().equals("query"))
+ 		{
+ 			int x = 1;
+ 		}
+ 		
+ 		int lCharOffset = (lLineNumber==-1?0:getLength(mLines,lLineNumber-1)+mLines[lLineNumber-1].indexOf('"',1+mLines[lLineNumber-1].indexOf('"',mLines[lLineNumber-1].indexOf(" "+a.getName()))));
  		
  		
-  	 a.setUserData("charOffset", String.valueOf( locator.getCharacterOffset() ), null ); //TODO: Get this to be the charOffset for the attribute not for the opening tag.
+ 		
+  	 a.setUserData("charOffset", String.valueOf( lCharOffset ), null ); //TODO: Get this to be the charOffset for the attribute not for the opening tag.
   	 return a;
    }
    
@@ -111,7 +118,7 @@ public class DOMAddLines extends DOMParser {
    {
   	 Element e = super.createElementNode(elemQName);
   	 e.setUserData("startLine", String.valueOf( locator.getLineNumber() ), null );
-  	 e.setUserData("charOffset", String.valueOf( locator.getCharacterOffset() ), null );
+  	 e.setUserData("charOffset", String.valueOf( locator.getCharacterOffset()+mExtraOffset ), null );
   	 return e;
    }
 
@@ -122,7 +129,7 @@ public class DOMAddLines extends DOMParser {
       throws XNIException {
 	  super.characters(text, augs);
 	  fCurrentNode.getLastChild().setUserData( "startLine", String.valueOf( locator.getLineNumber() ), null );
-	  fCurrentNode.getLastChild().setUserData("charOffset", String.valueOf( locator.getCharacterOffset() ), null );
+	  fCurrentNode.getLastChild().setUserData("charOffset", String.valueOf( locator.getCharacterOffset()+mExtraOffset ), null );
   }
 
 	public void startDocument(XMLLocator locator, String encoding, 
@@ -141,7 +148,7 @@ public class DOMAddLines extends DOMParser {
      if( node != null )
      {
           node.setUserData( "startLine", String.valueOf( locator.getLineNumber() ), null ); // Save location String into node
-          node.setUserData("charOffset", String.valueOf( locator.getCharacterOffset() ), null );
+          node.setUserData("charOffset", String.valueOf( locator.getCharacterOffset()+mExtraOffset ), null );
      }
   } //startDocument 
    
@@ -153,6 +160,10 @@ public class DOMAddLines extends DOMParser {
     else
        ;// Ignore ignorable white spaces
     }// ignorableWhitespace
+
+	public void setExtraOffset(int pExtraOffset) {
+	  mExtraOffset = pExtraOffset;
+  }
    
 
 }

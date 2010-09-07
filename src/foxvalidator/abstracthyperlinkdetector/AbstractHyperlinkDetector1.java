@@ -5,11 +5,14 @@ import static foxvalidator.X.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextViewer;
@@ -21,12 +24,16 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.wst.sse.core.internal.provisional.text.ITextRegionContainer;
 import org.eclipse.wst.sse.core.internal.text.rules.SimpleStructuredRegion;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import foxvalidator.CachedFile;
+import foxvalidator.ValidOptions;
+import foxvalidator.X;
 
 public class AbstractHyperlinkDetector1 extends AbstractHyperlinkDetector {
 	
@@ -51,7 +58,40 @@ public class AbstractHyperlinkDetector1 extends AbstractHyperlinkDetector {
 		CachedFile lCachedFile = getCachedFile(lCurrentFile);
 		Node lNode = getNodeAtPosition(lCachedFile.mDocElem, pRegion.getOffset());
 
-		return new IHyperlink[]{new WorkspaceFileHyperlink(new SimpleStructuredRegion(0, lNode.getNodeValue().length()), lCurrentFile)};
+		for(int i=0;i<mValidateChecks.length;i++)
+    {
+	    NodeList lNodeList = getCheckNodeListForDoc(lCachedFile,i);
+	  	if(nodeListContains(lNodeList, lNode))
+	  	{
+				List<CachedFile> lFilesToCheck = getFilesToCheck(lCurrentFile.getProject(), lCachedFile);
+				
+				List<ValidOptions> lPossibleValues = getValidValuesForDocs(lFilesToCheck, i);
+  			
+				if (lPossibleValues.size() > 0)
+				{
+		  		String lNodeText = lNode.getTextContent();
+					for (ValidOptions lDocValidOptions : lPossibleValues)
+					{
+						if (lDocValidOptions.mValidValues.keySet().contains(lNodeText))
+						{
+					    /*START COPYPASTA1*/ //Minor changes
+							String lStartLine = (String)lNode.getUserData("startLine");
+							if(lStartLine==null) {
+								lStartLine = (String)lNode.getParentNode().getUserData("startLine");
+							}
+					  	int lLineNumber = (lStartLine==null?-1:Integer.parseInt(lStartLine));
+							int lCharStart = (lLineNumber==-1?0:getLength(lCachedFile.mLines,lLineNumber-1)+lCachedFile.mLines[lLineNumber-1].indexOf(lNodeText));
+							/*END COPYPASTA1*/
+				
+							Node lTargetNode = lDocValidOptions.mValidValues.get(lNodeText);
+							
+							return new IHyperlink[]{new WorkspaceFileHyperlink(new SimpleStructuredRegion(lCharStart, lNodeText.length()), ResourcesPlugin.getWorkspace().getRoot().getFile(new Path(lDocValidOptions.mCachedFile.mFilePath)),new SimpleStructuredRegion(Integer.parseInt((String)lTargetNode.getUserData("charOffset"))-lTargetNode.getNodeValue().length(), lTargetNode.getNodeValue().length()))};
+						}
+					}
+				}
+			}
+    }
+  	return null;
 	}
 
 //	@Override

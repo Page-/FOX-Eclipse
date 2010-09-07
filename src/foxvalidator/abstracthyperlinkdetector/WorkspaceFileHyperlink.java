@@ -18,7 +18,10 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.ide.IDE;
+import org.eclipse.ui.part.MultiPageEditorPart;
 import org.eclipse.ui.texteditor.ITextEditor;
+import org.eclipse.wst.sse.ui.StructuredTextEditor;
+import org.eclipse.wst.xml.ui.internal.tabletree.XMLMultiPageEditorPart;
 
 /**
  * Hyperlink for files within the workspace. (As long as there is an IFile,
@@ -77,8 +80,16 @@ class WorkspaceFileHyperlink implements IHyperlink {
 				IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 				IEditorPart editor = IDE.openEditor(page, fFile, true);
 				// highlight range in editor if possible
-				if ((fHighlightRange != null) && (editor instanceof ITextEditor)) {
-					((ITextEditor) editor).setHighlightRange(fHighlightRange.getOffset(), fHighlightRange.getLength(), true);
+				if (fHighlightRange != null) {
+					if(editor instanceof ITextEditor) {
+						((ITextEditor) editor).setHighlightRange(fHighlightRange.getOffset(), fHighlightRange.getLength(), true);
+					}
+					else if(editor instanceof MultiPageEditorPart) {
+						Object lSelectedPage = ((MultiPageEditorPart)editor).getSelectedPage();
+						if(lSelectedPage instanceof ITextEditor) {
+							((ITextEditor)lSelectedPage).setHighlightRange(fHighlightRange.getOffset(), fHighlightRange.getLength(), true);
+						}
+					}
 				}
 			}
 			catch (PartInitException pie) {

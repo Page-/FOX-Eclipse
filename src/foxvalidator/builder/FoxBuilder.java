@@ -34,6 +34,7 @@ import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import foxvalidator.CachedFile;
+import foxvalidator.ValidOptions;
 import foxvalidator.X;
 
 public class FoxBuilder extends IncrementalProjectBuilder
@@ -152,7 +153,11 @@ public class FoxBuilder extends IncrementalProjectBuilder
 		  			if(mMonitor.isCanceled()) {
 		  				throw new OperationCanceledException();
 		  			}
-			      List<String> lValidValues = new ArrayList<String>(getValidValuesForDocs(lFilesToCheck,x).keySet());
+			      List<String> lValidValues = new ArrayList<String>();
+			      for(ValidOptions lValidOptions : getValidValuesForDocs(lFilesToCheck,x))
+			      {
+			      	lValidValues.addAll(lValidOptions.mValidValues.keySet());
+			      }
 
 			      NodeList lNodeList = getCheckNodeListForDoc(lCachedFile,x);
 			      for(int i=0;i<lNodeList.getLength();i++)

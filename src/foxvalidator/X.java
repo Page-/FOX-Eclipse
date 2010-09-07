@@ -88,7 +88,7 @@ public class X {
 	}
 	public static void p(InputStream is)
 	{
-			p(inputStreamToString(is));
+			p(inputStreamToString(is,"UTF-8"));
 	}
 	public static String implode(List<String> pList) {
 		if (pList.isEmpty()) {
@@ -145,7 +145,7 @@ public class X {
 		return lLen;
 	}
 
-	public static String inputStreamToString(InputStream is) {
+	public static String inputStreamToString(InputStream is, String pCharset) {
 		/*
 		 * To convert the InputStream to String we use the BufferedReader.readLine()
 		 * method. We iterate until the BufferedReader return null which means
@@ -158,7 +158,7 @@ public class X {
 
 			try
 			{
-				BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+				BufferedReader reader = new BufferedReader(new InputStreamReader(is, pCharset));
 				char[] lBuffer = new char[1024];
 				int lRead;
 				while ((lRead = reader.read(lBuffer)) != -1) {
@@ -182,12 +182,11 @@ public class X {
 		}
 	}
 	
-	public static List<CachedFile> getFilesToCheck(IContainer pRootSearch, CachedFile pCachedFile)
+	public static List<IFile> getAllFiles(IContainer pRootSearch)
 	{
-		List<CachedFile> lFilesToCheck = new ArrayList<CachedFile>();
+		List<IFile> lAllFiles = new ArrayList<IFile>();
 		try
 		{
-			List<IFile> lAllFiles = new ArrayList<IFile>();
 			List<IResource> lTempSearch = new ArrayList<IResource>();
 	//				Collections.addAll(tempSearch, getProject().members());
 	    Collections.addAll(lTempSearch, pRootSearch.members());
@@ -208,32 +207,52 @@ public class X {
 	    		}
 	    	}
 	  	}
-	    List<String> lLibraryList = new ArrayList<String>(getValidValuesForDoc(pCachedFile,9).keySet());
-	    for(int i=0;i<lLibraryList.size();i++)
+	  }
+		catch (CoreException e) {
+	    e.printStackTrace();
+	  }
+		return lAllFiles;
+	}
+	
+	public static List<CachedFile> getFilesToCheck(IContainer pRootSearch, CachedFile pCachedFile)
+	{
+		List<IFile> lAllFiles = getAllFiles(pRootSearch);
+		List<CachedFile> lFilesToCheck = new ArrayList<CachedFile>();
+
+		try
+		{
+	    List<String> lLibraryList = new ArrayList<String>();
+			NodeList lLibraryNodeList = (NodeList)mLibrariesXPath.evaluate(pCachedFile.mDocElem,XPathConstants.NODESET);
+	    for(int i=0;i<lLibraryNodeList.getLength();i++)
 	    {
-	    	String lIncludeName = lLibraryList.get(i)+".xml";
+	    	lLibraryList.add(lLibraryNodeList.item(i).getNodeValue()+".xml");
+	    }
+	    for(String lIncludeName : lLibraryList)
+	    {
 	    	p("Trying to include: "+lIncludeName);
 	    	for(IFile lFile : lAllFiles)
 	    	{
 		    	if(lFile!=null&&lFile.exists()&&lFile.getName().equals(lIncludeName))
 		    	{
 	    			CachedFile lFileToCheck = getCachedFile(lFile);
-    				lFilesToCheck.add(lFileToCheck);
-		    		Map<String,String> lLibrariesToAdd = getValidValuesForDoc(lFileToCheck,9);
-		    		for(String lLibrary : lLibrariesToAdd.keySet())
-		    		{
-		    			if(!lLibraryList.contains(lLibrary))
+	  				lFilesToCheck.add(lFileToCheck);
+	  				NodeList lLibrariesToAdd = (NodeList)mLibrariesXPath.evaluate(pCachedFile.mDocElem,XPathConstants.NODESET);
+		    		for(int j=0;j<lLibrariesToAdd.getLength();j++)
+		    	  {
+		    			String lLibraryToAdd = lLibrariesToAdd.item(j).getNodeValue()+".xml";
+		    			if(!lLibraryList.contains(lLibraryToAdd))
 		    			{
-		    				lLibraryList.add(lLibrary);
+		    				lLibraryList.add(lLibraryToAdd);
 		    			}
 		    		}
 		    	}
 	    	}
-	    }
+    	}
     }
-		catch (CoreException e) {
-	    e.printStackTrace();
-    }
+		catch(XPathExpressionException e)
+		{
+			e.printStackTrace();
+		}
     return lFilesToCheck;
 	}
 
@@ -255,11 +274,13 @@ public class X {
 			Element lDocElem = null;
 			String[] lines = null;
   		try {
-				String fileContentsString = inputStreamToString(pFile.getContents());
-				lines = fileContentsString.split("\n");
-				InputSource fileContents = stringToInputSource(hackNamespaces(fileContentsString));
+				String lFileContentsString = inputStreamToString(pFile.getContents(),pFile.getCharset());
+				lines = lFileContentsString.split("\n");
+				String lHackedNamespacesString = hackNamespaces(lFileContentsString);
+				InputSource lFileContents = stringToInputSource(lHackedNamespacesString);
+				dal.setExtraOffset(lFileContentsString.length()-lHackedNamespacesString.length());
 				dal.setLines(lines);
-				dal.parse(fileContents);
+				dal.parse(lFileContents);
   			lDocElem = dal.getDocument().getDocumentElement();
 	  	}
   		catch (SAXException e) {
@@ -320,14 +341,18 @@ public class X {
 
 	public static Node getNodeAtPosition(NamedNodeMap pNodeList, int pPosition)
 	{
+		int lMinPos = Integer.MAX_VALUE;
+		Node lReturnNode = null;
 	  for(int i=0;i<pNodeList.getLength();i++)
 	  {
 	  	Node lNode = pNodeList.item(i);
-	  	if(Integer.valueOf((String)lNode.getUserData("charOffset")) > pPosition) {
-	  		return lNode;
+	  	int lCharOffSet = Integer.valueOf((String)lNode.getUserData("charOffset"));
+	  	if(lCharOffSet < lMinPos && lCharOffSet > pPosition) {
+	  		lMinPos = lCharOffSet;
+	  		lReturnNode = lNode;
 	  	}
 	  }
-	  return null;
+	  return lReturnNode;
   }
 	
 	public static InputSource stringToInputSource(String pString)
@@ -341,7 +366,9 @@ public class X {
 	  return new ByteArrayInputStream(pString.getBytes());
   }
 
-
+	public static XPathExpression mAllAttrsXPath;
+	public static XPathExpression mLibrariesXPath;
+//	public final static XPathExpression[][] mHyperlinks = new XPathExpression[2][2];
 	public final static XPathExpression[][] mValidateChecks = new XPathExpression[11][4];
 	public final static String[] mValidateCheckNames = {"Action","State","Database Interface","Query","Api","Storage Location","Mapset","Template","Entry Theme","Module","Buffer"};
 	
@@ -360,6 +387,16 @@ public class X {
 		mXPath.setNamespaceContext(new FoxNamespaceContext());
 		try
 		{
+			mAllAttrsXPath = mXPath.compile("//@*");
+			
+			mLibrariesXPath = mXPath.compile("//fm:name/text() | //fm:library/text()");// "//fm:name/text()" included so that current module is also loaded in
+
+//			mHyperlinks[0][0] = mXPath.compile("//fm:library[text()]");
+//			mHyperlinks[0][1] = mXPath.compile("//fm:name[text()]");
+//
+//			mHyperlinks[1][0] = mXPath.compile("//fm:action");
+//			mHyperlinks[1][1] = mXPath.compile("//@action | //@callback-action | "+foxify("//@fox:change-action | //@fox:action | //@fox:upload-success-action | //@fox:upload-fail-action | //@fox:navAction"));
+			
 			mValidateChecks[0][VALIDATE_VALID_VALUES_LIST] = mXPath.compile("@name");
 			for(int i=1;i<mValidateChecks.length;i++)
 			{
@@ -395,8 +432,8 @@ public class X {
 			mValidateChecks[8][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:entry-theme[@name]");
 			mValidateChecks[8][VALIDATE_CHECK_LIST] = mXPath.compile("//@theme");
 			
-			mValidateChecks[9][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:name[text()] | //fm:library[text()]");
-			mValidateChecks[9][VALIDATE_CHECK_LIST] = mXPath.compile("//@module");
+			mValidateChecks[9][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:name[text()]");
+			mValidateChecks[9][VALIDATE_CHECK_LIST] = mXPath.compile("//@module | //fm:library/text()");
 			mValidateChecks[9][VALIDATE_VALID_VALUES_LIST] = mXPath.compile("text()");
 			
 			mValidateChecks[10][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:set-buffer[@name]");
@@ -407,16 +444,16 @@ public class X {
     }
 	}
 	
-	public static Map<String,String> getValidValuesForDocs(List<CachedFile> pCachedFiles, int pValidateCheckIndex)
+	public static List<ValidOptions> getValidValuesForDocs(List<CachedFile> pCachedFiles, int pValidateCheckIndex)
 	{
-		Map<String,String> lValidValues = new TreeMap<String,String>();
-		for(CachedFile e : pCachedFiles) {
-			lValidValues.putAll(getValidValuesForDoc(e, pValidateCheckIndex));
+		List<ValidOptions> lValidValues = new ArrayList<ValidOptions>();
+		for(CachedFile lCachedFile : pCachedFiles) {
+			lValidValues.add(new ValidOptions(getValidValuesForDoc(lCachedFile, pValidateCheckIndex),lCachedFile));
 		}
 		return lValidValues;
 	}
 	
-	public static Map<String,String> getValidValuesForDoc(CachedFile pCachedFile, int pValidateCheckIndex)
+	public static Map<String,Node> getValidValuesForDoc(CachedFile pCachedFile, int pValidateCheckIndex)
 	{
 		if(pValidateCheckIndex>=mValidateChecks.length) {
 			throw new RuntimeException("Invalid validateCheck index: "+pValidateCheckIndex);
@@ -427,23 +464,22 @@ public class X {
   	return pCachedFile.mValidValues[pValidateCheckIndex];
 	}
 	
-	public static Map<String,String> getValidValuesForDoc(Element pDocElem, int pValidateCheckIndex)
+	public static Map<String,Node> getValidValuesForDoc(Element pDocElem, int pValidateCheckIndex)
 	{
 		if(pValidateCheckIndex>=mValidateChecks.length) {
 			throw new RuntimeException("Invalid validateCheck index: "+pValidateCheckIndex);
 		}
     try
     {
-	    Map<String,String> lValidValues = new TreeMap<String,String>();
+	    Map<String,Node> lValidValues = new TreeMap<String,Node>();
     	NodeList lNodeList = (NodeList) mValidateChecks[pValidateCheckIndex][VALIDATE_VALID_DEFINITION_LIST].evaluate(pDocElem,XPathConstants.NODESET);
 	    for(int i=0;i<lNodeList.getLength();i++)
 	    {
 	    	Node lNode = lNodeList.item(i);
-	    	DOMSerializer ds = new DOMSerializer();
 //	    	p(ds.serializeNode(n));
 	    	lNode = ((Node)mValidateChecks[pValidateCheckIndex][VALIDATE_VALID_VALUES_LIST].evaluate(lNode,XPathConstants.NODE));
 	    	String lKey = lNode.getNodeValue();
-	    	String lValue = ds.serializeNode(lNodeList.item(i));
+	    	Node lValue = lNode;
 	    	lValidValues.put(lKey,lValue);
 //	    	p(nodeList.item(i).getNodeValue());
 	    }
@@ -453,6 +489,30 @@ public class X {
 			throw new RuntimeException("Invalid xpath expression for validate check: "+pValidateCheckIndex,e);
     }
 	}
+	
+//	public static NodeList getHyperlinkNodeListForDoc(CachedFile pCachedFile)
+//	{
+//    if(pCachedFile.mHyperlinkNodeList == null) {
+//    	pCachedFile.mHyperlinkNodeList = getHyperlinkNodeListForDoc(pCachedFile.mDocElem);
+//    }
+//    return pCachedFile.mHyperlinkNodeList;
+//	}
+//	
+//	public static NodeList getHyperlinkNodeListForDoc(Element pDocElem, int pHyperlinkCheckIndex)
+//	{
+//		if(pHyperlinkCheckIndex>=mValidateChecks.length) {
+//			throw new RuntimeException("Invalid validateCheck index: "+pHyperlinkCheckIndex);
+//		}
+//    try
+//    {
+//    	NodeSet lCheckList = new NodeSet((NodeList) mHyperlinks[pHyperlinkCheckIndex][0].evaluate(pDocElem,XPathConstants.NODESET));
+//
+//	    return lCheckList;
+//    }
+//    catch (XPathExpressionException e) {
+//			throw new RuntimeException("Invalid xpath expression for hyperlink list",e);
+//    }
+//	}
 	
 	public static NodeList getCheckNodeListForDoc(CachedFile pCachedFile, int pValidateCheckIndex)
 	{
@@ -473,7 +533,10 @@ public class X {
     try
     {
     	NodeSet lCheckList = new NodeSet((NodeList) mValidateChecks[pValidateCheckIndex][VALIDATE_CHECK_LIST].evaluate(pDocElem,XPathConstants.NODESET));
-
+    	if(pValidateCheckIndex==9){
+    	p(lCheckList.size());
+//    	p(lCheckList.item(0).toString());
+    	}
       if(mValidateChecks[pValidateCheckIndex][VALIDATE_EXCLUDE_LIST]!=null)
       {
       	NodeList pExcludeList = (NodeList) mValidateChecks[pValidateCheckIndex][2].evaluate(pDocElem,XPathConstants.NODESET);
@@ -512,7 +575,7 @@ public class X {
 			}
 		return false;
 	}
-	
+
 	public static String[][] getValidOptions(IDOMNode pNode, int rOffset, int rLength, String pAttributeName, String pMatchString, ITextRegion pRegion)
 	{
 		List<String[]> lValidOptions = new ArrayList<String[]>();
@@ -540,23 +603,26 @@ public class X {
 				IFile lCurrentFile = (IFile) lEditorPart.getAdapter(IResource.class);
 
 				CachedFile lCachedFile = getCachedFile(lCurrentFile);
-				List<CachedFile> lFilesToCheck = getFilesToCheck(lCurrentFile.getParent().getParent(), lCachedFile);
+				List<CachedFile> lFilesToCheck = getFilesToCheck(lCurrentFile.getProject(), lCachedFile);
 				
-				Map<String,String> lPossibleValues = getValidValuesForDocs(lFilesToCheck, i);
+				List<ValidOptions> lPossibleValues = getValidValuesForDocs(lFilesToCheck, i);
   			
 				if (lPossibleValues.size() > 0)
 				{
 					boolean lExistingComplicatedValue = (pRegion != null) && (pRegion instanceof ITextRegionContainer);
 					if (!lExistingComplicatedValue)
 					{
-						for (Map.Entry<String,String> lPossibleValueEntry : lPossibleValues.entrySet())
+						for (ValidOptions lDocValidOptions : lPossibleValues)
 						{
-							String lPossibleValue = lPossibleValueEntry.getKey();
-							if ((pMatchString.length() == 0) || lPossibleValue.startsWith(pMatchString))
+							for (Map.Entry<String,Node> lPossibleValueEntry : lDocValidOptions.mValidValues.entrySet())
 							{
-								String lReplaceString = "\"" + lPossibleValue + "\"";
-								String lInfo = "<pre>"+(lPossibleValueEntry.getValue().replaceAll("&", "&amp;").replaceAll("<", "&lt;"))+"</pre>";
-								lValidOptions.add(new String[]{lReplaceString,lInfo});
+								String lPossibleValue = lPossibleValueEntry.getKey();
+								if ((pMatchString.length() == 0) || lPossibleValue.startsWith(pMatchString))
+								{
+									String lReplaceString = "\"" + lPossibleValue + "\"";
+									String lInfo = "<pre>"+(ds.serializeNode(lPossibleValueEntry.getValue()).replaceAll("&", "&amp;").replaceAll("<", "&lt;"))+"</pre>";
+									lValidOptions.add(new String[]{lReplaceString,lInfo});
+								}
 							}
 						}
 					}
