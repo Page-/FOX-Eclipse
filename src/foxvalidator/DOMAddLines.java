@@ -125,12 +125,25 @@ public class DOMAddLines extends DOMParser {
    /* We override startDocument callback from DocumentHandler */
 
    @Override
-  public void characters(XMLString text, Augmentations augs)
-      throws XNIException {
+  public void characters(XMLString text, Augmentations augs) throws XNIException {
 	  super.characters(text, augs);
 	  fCurrentNode.getLastChild().setUserData( "startLine", String.valueOf( locator.getLineNumber() ), null );
 	  fCurrentNode.getLastChild().setUserData("charOffset", String.valueOf( locator.getCharacterOffset()+mExtraOffset ), null );
   }
+   
+   @Override
+   public void comment(XMLString text, Augmentations augs) throws XNIException {
+ 	  super.comment(text, augs);
+ 	  fCurrentNode.getLastChild().setUserData( "startLine", String.valueOf( locator.getLineNumber() ), null );
+ 	  fCurrentNode.getLastChild().setUserData("charOffset", String.valueOf( locator.getCharacterOffset()+mExtraOffset ), null );
+   }
+   
+   @Override
+   public void processingInstruction(String target, XMLString data, Augmentations augs) throws XNIException {
+ 	  super.processingInstruction(target, data, augs);
+ 	  fCurrentNode.getLastChild().setUserData( "startLine", String.valueOf( locator.getLineNumber() ), null );
+ 	  fCurrentNode.getLastChild().setUserData("charOffset", String.valueOf( locator.getCharacterOffset()+mExtraOffset ), null );
+   }
 
 	public void startDocument(XMLLocator locator, String encoding, 
                              NamespaceContext namespaceContext, Augmentations augs) throws XNIException {
