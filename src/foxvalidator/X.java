@@ -274,7 +274,7 @@ public class X {
 			Element lDocElem = null;
 			String[] lines = null;
   		try {
-				String lFileContentsString = inputStreamToString(pFile.getContents(),pFile.getCharset());
+				String lFileContentsString = inputStreamToString(pFile.getContents(true),pFile.getCharset());
 				lines = lFileContentsString.split("\n");
 				String lHackedNamespacesString = hackNamespaces(lFileContentsString);
 				InputSource lFileContents = stringToInputSource(lHackedNamespacesString);

@@ -40,7 +40,7 @@ public class HackNamespaces implements IObjectActionDelegate {
 		String lFileContents;
     try
     {
-	    lFileContents = inputStreamToString(pFile.getContents(),pFile.getCharset());
+	    lFileContents = inputStreamToString(pFile.getContents(true),pFile.getCharset());
 			if(lFileContents.contains("http://www.og.dti.gov/fox2\"") || lFileContents.contains("http://www.og.dti.gov/fox_global2\"")) {
 				lFileContents = mergeNamespaces(lFileContents);
 			}
