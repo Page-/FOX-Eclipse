@@ -1,26 +1,18 @@
 package foxvalidator.builder;
 
-import static foxvalidator.X.getCachedFile;
-import static foxvalidator.X.getCheckNodeListForDoc;
-import static foxvalidator.X.getFilesToCheck;
-import static foxvalidator.X.getLength;
-import static foxvalidator.X.getValidValuesForDocs;
-import static foxvalidator.X.hackNamespaces;
-import static foxvalidator.X.implode;
-import static foxvalidator.X.inputStreamToString;
-import static foxvalidator.X.mValidateCheckNames;
-import static foxvalidator.X.mValidateChecks;
-import static foxvalidator.X.p;
-import static foxvalidator.X.stringToInputSource;
+import static foxvalidator.X.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
@@ -42,6 +34,7 @@ import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import foxvalidator.CachedFile;
+import foxvalidator.X;
 
 public class FoxBuilder extends IncrementalProjectBuilder
 {
@@ -49,6 +42,22 @@ public class FoxBuilder extends IncrementalProjectBuilder
 	{
 		p("Validator");
 	}
+  
+  public static char matchingBracket(char bracket) {
+    if (bracket == '(')
+      return ')';
+    if (bracket == '[')
+      return ']';
+    if (bracket == '{')
+      return '}';
+    if (bracket == ')')
+      return '(';
+    if (bracket == ']')
+      return '[';
+    if (bracket == '}')
+      return '{';
+    throw new RuntimeException(bracket+" is not an expected bracket type.");
+  }
 
 	class FoxVisitor implements IResourceDeltaVisitor, IResourceVisitor
 	{
@@ -155,21 +164,66 @@ public class FoxBuilder extends IncrementalProjectBuilder
 //			      		StringWriter sw = new StringWriter();
 //			      		d.serializeNode(nodeList.item(i), sw, "");
 //			      		p(sw.toString());
-			      		//TODO: This is also done in HyperLink stuff, can we consolidate?
+			      		
+			          /*START COPYPASTA1*/ //TODO: This is also done in HyperLink stuff, can we consolidate?
 			      		String lStartLine = (String)lNode.getUserData("startLine");
 			      		if(lStartLine==null) {
 			      			lStartLine = (String)lNode.getParentNode().getUserData("startLine");
 			      		}
-//			      		p(lStartLine);
-			      		int lLineNumber = (lStartLine==null?-1:Integer.parseInt(lStartLine));
+	            	int lLineNumber = (lStartLine==null?-1:Integer.parseInt(lStartLine));
 			      		int lCharStart = (lLineNumber==-1?0:getLength(lCachedFile.mLines,lLineNumber-1)+lCachedFile.mLines[lLineNumber-1].indexOf(lNode.getTextContent()));
-//			      		p(lCharStart);
 			      		int lCharEnd = (lLineNumber==-1?0:lCharStart + lNode.getTextContent().length());
+			      		/*END COPYPASTA1*/
 			      		p(lLineNumber);
 			      		addMarker(lFile, mValidateCheckNames[x]+" '"+lNode.getTextContent()+"' not found.", lLineNumber, IMarker.SEVERITY_WARNING, lCharStart, lCharEnd, lValidValues);
 			      	}
 //			      	p(nodeList.item(i).getTextContent());
 			      }
+		      }
+
+		      NodeList lNodeList = (NodeList)X.mAllAttrsXPath.evaluate(lCachedFile.mDocElem,XPathConstants.NODESET);
+		      for(int i=0;i<lNodeList.getLength();i++)
+		      {
+		      	Node lNode = lNodeList.item(i);
+		      	
+		      	String lText = lNode.getTextContent();
+
+	          /*START COPYPASTA1*/
+	      		String lStartLine = (String)lNode.getUserData("startLine");
+	      		if(lStartLine==null) {
+	      			lStartLine = (String)lNode.getParentNode().getUserData("startLine");
+	      		}
+          	int lLineNumber = (lStartLine==null?-1:Integer.parseInt(lStartLine));
+	      		int lCharStart = (lLineNumber==-1?0:getLength(lCachedFile.mLines,lLineNumber-1)+lCachedFile.mLines[lLineNumber-1].indexOf(lText));
+	      		int lCharEnd = (lLineNumber==-1?0:lCharStart + lText.length());
+	      		/*END COPYPASTA1*/
+	      		
+		        Stack<String> lStack = new Stack<String>();
+		        for (int j = 0; j < lText.length(); j += 1) {
+		          char lChar = lText.charAt(j);
+		          if (lChar == '(' || lChar == '[' || lChar == '{') {
+		            lStack.push("" + lChar + j); // push a String containing the char and the offset
+		          }
+		          else if (lChar == ')' || lChar == ']' || lChar == '}') {
+		          	if(lStack.empty()) {
+		          		addMarker(lFile, "Found closing '"+lChar+"' with no opening '"+matchingBracket(lChar)+"'.", lLineNumber, IMarker.SEVERITY_WARNING, lCharStart, lCharEnd, null);
+				      		continue;
+		          	}
+		          	else {
+			            String peek = lStack.peek();
+			            if (matchingBracket(peek.charAt(0))==lChar) { // does it match?
+			              lStack.pop();
+			            } else { // mismatch
+					      		addMarker(lFile, "Unexpected  '"+lChar+"', expected '"+matchingBracket(peek.charAt(0))+"'.", lLineNumber, IMarker.SEVERITY_WARNING, lCharStart, lCharEnd, null);
+			            }
+		          	}
+		          }
+		        }
+		        while(!lStack.empty()) { // anything left in the stack is a mismatch
+	            String lPop = lStack.pop();
+		      		addMarker(lFile, "Found opening '"+lPop.charAt(0)+"' but no matching '"+matchingBracket(lPop.charAt(0))+"'.", lLineNumber, IMarker.SEVERITY_WARNING, lCharStart, lCharEnd, null);
+		        }
+		        
 		      }
 				} catch (Exception e1) {
 					e1.printStackTrace();
