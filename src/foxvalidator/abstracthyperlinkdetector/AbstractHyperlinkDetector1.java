@@ -83,9 +83,15 @@ public class AbstractHyperlinkDetector1 extends AbstractHyperlinkDetector {
 							int lCharStart = (lLineNumber==-1?0:getLength(lCachedFile.mLines,lLineNumber-1)+lCachedFile.mLines[lLineNumber-1].indexOf(lNodeText));
 							/*END COPYPASTA1*/
 				
-							Node lTargetNode = lDocValidOptions.mValidValues.get(lNodeText);
+							Node lTargetNode = lDocValidOptions.mValidValues.get(lNodeText).mNode;
 							
-							return new IHyperlink[]{new WorkspaceFileHyperlink(new SimpleStructuredRegion(lCharStart, lNodeText.length()), ResourcesPlugin.getWorkspace().getRoot().getFile(new Path(lDocValidOptions.mCachedFile.mFilePath)),new SimpleStructuredRegion(Integer.parseInt((String)lTargetNode.getUserData("charOffset"))-lTargetNode.getNodeValue().length(), lTargetNode.getNodeValue().length()))};
+							return new IHyperlink[]{
+												new WorkspaceFileHyperlink(
+														new SimpleStructuredRegion(lCharStart, lNodeText.length()),
+														ResourcesPlugin.getWorkspace().getRoot().getFile(new Path(lDocValidOptions.mCachedFile.mFilePath)),
+														new SimpleStructuredRegion(Integer.parseInt((String)lTargetNode.getUserData("charOffset"))-lTargetNode.getNodeValue().length(), lTargetNode.getNodeValue().length())
+													)
+												};
 						}
 					}
 				}

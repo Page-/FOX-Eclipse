@@ -371,7 +371,7 @@ public class X {
 
 	public static XPathExpression mAllAttrsXPath;
 	public static XPathExpression mLibrariesXPath;
-	public final static XPathExpression[][] mValidateChecks = new XPathExpression[11][4];
+	public final static Object[][] mValidateChecks = new Object[11][4];
 	public final static String[] mValidateCheckNames = {"Action","State","Database Interface","Query","Api","Storage Location","Mapset","Template","Entry Theme","Module","Buffer"};
 	
 	//temp
@@ -392,48 +392,52 @@ public class X {
 			mAllAttrsXPath = mXPath.compile("//@*");
 			
 			mLibrariesXPath = mXPath.compile("//fm:name/text() | //fm:library/text()");// "//fm:name/text()" included so that current module is also loaded in
-
-			mValidateChecks[0][VALIDATE_VALID_VALUES_LIST] = mXPath.compile("@name");
-			for(int i=1;i<mValidateChecks.length;i++)
-			{
-				mValidateChecks[i][VALIDATE_VALID_VALUES_LIST] = mValidateChecks[0][VALIDATE_VALID_VALUES_LIST]; //Reuse the same compiled XPath object.
-			}
 			
 			mValidateChecks[0][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:action");
 			mValidateChecks[0][VALIDATE_CHECK_LIST] = mXPath.compile("//@action | //@callback-action | "+foxify("//@fox:change-action | //@fox:action | //@fox:upload-success-action | //@fox:upload-fail-action | //@fox:navAction"));
 			mValidateChecks[0][VALIDATE_EXCLUDE_LIST] = mXPath.compile("//fm:state/@action");
+			mValidateChecks[0][VALIDATE_VALID_VALUES_LIST] = (Object) new XPathExpression[] {
+																														mXPath.compile("@name"),
+																														mXPath.compile("concat(ancestor-or-self::fm:state/@name,'/',@name)")
+																													};
 			
-			mValidateChecks[1][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:state[not(@action) and boolean(@name)]");
-			mValidateChecks[1][VALIDATE_CHECK_LIST] = mXPath.compile("//fm:entry-theme/fm:state/text() | //@state | //fm:state/@name | //fm:state-replace/@name | //fm:state-push/@name");
+			mValidateChecks[1][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:set-buffer[@name]");
+			mValidateChecks[1][VALIDATE_CHECK_LIST] = mXPath.compile("//fm:include/@name");
+			mValidateChecks[1][VALIDATE_VALID_VALUES_LIST] = mValidateChecks[0][VALIDATE_VALID_VALUES_LIST];
+			
+			mValidateChecks[2][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:name[text()]");
+			mValidateChecks[2][VALIDATE_CHECK_LIST] = mXPath.compile("//@module | //fm:library/text()");
+			mValidateChecks[2][VALIDATE_VALID_VALUES_LIST] = (Object) new XPathExpression[] {mXPath.compile("text()")};
+			
+			mValidateChecks[3][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:state[not(@action) and boolean(@name)]");
+			mValidateChecks[3][VALIDATE_CHECK_LIST] = mXPath.compile("//fm:entry-theme/fm:state/text() | //@state | //fm:state/@name | //fm:state-replace/@name | //fm:state-push/@name");
+			mValidateChecks[3][VALIDATE_VALID_VALUES_LIST] = (Object) new XPathExpression[] {mXPath.compile("@name")};
 
-
-			mValidateChecks[2][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:db-interface[@name]");
-			mValidateChecks[2][VALIDATE_CHECK_LIST] = mXPath.compile("//@interface");
+			for(int i=4;i<mValidateChecks.length;i++)
+			{
+				mValidateChecks[i][VALIDATE_VALID_VALUES_LIST] = mValidateChecks[3][VALIDATE_VALID_VALUES_LIST]; //Reuse the same compiled XPath object.
+			}
 			
-			mValidateChecks[3][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:query[@name]");
-			mValidateChecks[3][VALIDATE_CHECK_LIST] = mXPath.compile("//@query");
+			mValidateChecks[4][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:db-interface[@name]");
+			mValidateChecks[4][VALIDATE_CHECK_LIST] = mXPath.compile("//@interface");
 			
-			mValidateChecks[4][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:api[@name]");
-			mValidateChecks[4][VALIDATE_CHECK_LIST] = mXPath.compile("//@api");
+			mValidateChecks[5][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:query[@name]");
+			mValidateChecks[5][VALIDATE_CHECK_LIST] = mXPath.compile("//@query");
 			
-			mValidateChecks[5][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:storage-location[@name]");
-			mValidateChecks[5][VALIDATE_CHECK_LIST] = mXPath.compile("//fm:map-set/fm:storage-location/text()");
+			mValidateChecks[6][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:api[@name]");
+			mValidateChecks[6][VALIDATE_CHECK_LIST] = mXPath.compile("//@api");
 			
-			mValidateChecks[6][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:map-set[@name]");
-			mValidateChecks[6][VALIDATE_CHECK_LIST] = mXPath.compile(foxify("//@fox:map-set"));
+			mValidateChecks[7][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:storage-location[@name]");
+			mValidateChecks[7][VALIDATE_CHECK_LIST] = mXPath.compile("//fm:map-set/fm:storage-location/text()");
 			
-			mValidateChecks[7][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:template[@name]");
-			mValidateChecks[7][VALIDATE_CHECK_LIST] = mXPath.compile("//@template");
+			mValidateChecks[8][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:map-set[@name]");
+			mValidateChecks[8][VALIDATE_CHECK_LIST] = mXPath.compile(foxify("//@fox:map-set"));
 			
-			mValidateChecks[8][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:entry-theme[@name]");
-			mValidateChecks[8][VALIDATE_CHECK_LIST] = mXPath.compile("//@theme");
+			mValidateChecks[9][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:template[@name]");
+			mValidateChecks[9][VALIDATE_CHECK_LIST] = mXPath.compile("//@template");
 			
-			mValidateChecks[9][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:name[text()]");
-			mValidateChecks[9][VALIDATE_CHECK_LIST] = mXPath.compile("//@module | //fm:library/text()");
-			mValidateChecks[9][VALIDATE_VALID_VALUES_LIST] = mXPath.compile("text()");
-			
-			mValidateChecks[10][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:set-buffer[@name]");
-			mValidateChecks[10][VALIDATE_CHECK_LIST] = mXPath.compile("//fm:include/@name");
+			mValidateChecks[10][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:entry-theme[@name]");
+			mValidateChecks[10][VALIDATE_CHECK_LIST] = mXPath.compile("//@theme");
     }
 		catch (XPathExpressionException e1) {
 	    e1.printStackTrace();
@@ -449,7 +453,7 @@ public class X {
 		return lValidValues;
 	}
 	
-	public static Map<String,Node> getValidValuesForDoc(CachedFile pCachedFile, int pValidateCheckIndex)
+	public static Map<String,ValidValues> getValidValuesForDoc(CachedFile pCachedFile, int pValidateCheckIndex)
 	{
 		if(pValidateCheckIndex>=mValidateChecks.length) {
 			throw new RuntimeException("Invalid validateCheck index: "+pValidateCheckIndex);
@@ -460,55 +464,41 @@ public class X {
   	return pCachedFile.mValidValues[pValidateCheckIndex];
 	}
 	
-	public static Map<String,Node> getValidValuesForDoc(Element pDocElem, int pValidateCheckIndex)
+	public static Map<String,ValidValues> getValidValuesForDoc(Element pDocElem, int pValidateCheckIndex)
 	{
 		if(pValidateCheckIndex>=mValidateChecks.length) {
 			throw new RuntimeException("Invalid validateCheck index: "+pValidateCheckIndex);
 		}
     try
     {
-	    Map<String,Node> lValidValues = new TreeMap<String,Node>();
-    	NodeList lNodeList = (NodeList) mValidateChecks[pValidateCheckIndex][VALIDATE_VALID_DEFINITION_LIST].evaluate(pDocElem,XPathConstants.NODESET);
+	    Map<String,ValidValues> lValidValuesList = new TreeMap<String,ValidValues>();
+    	NodeList lNodeList = (NodeList) ((XPathExpression)mValidateChecks[pValidateCheckIndex][VALIDATE_VALID_DEFINITION_LIST]).evaluate(pDocElem,XPathConstants.NODESET);
 	    for(int i=0;i<lNodeList.getLength();i++)
 	    {
 	    	Node lNode = lNodeList.item(i);
+	    	ValidValues lValidValues = null;
 //	    	p(ds.serializeNode(n));
-	    	lNode = ((Node)mValidateChecks[pValidateCheckIndex][VALIDATE_VALID_VALUES_LIST].evaluate(lNode,XPathConstants.NODE));
-	    	String lKey = lNode.getNodeValue();
-	    	Node lValue = lNode;
-	    	lValidValues.put(lKey,lValue);
+	    	for(XPathExpression lXPathExpression : (XPathExpression[]) mValidateChecks[pValidateCheckIndex][VALIDATE_VALID_VALUES_LIST])
+	    	{
+	    		String lKey;
+	    		if(lValidValues==null) {
+	    			Node lKeyNode = (Node)lXPathExpression.evaluate(lNode,XPathConstants.NODE);
+	    			lKey = lKeyNode.getNodeValue();
+	    			lValidValues = new ValidValues(lKeyNode, ds.serializeNode(lNode));
+	    		}
+	    		else {
+	    			lKey = lXPathExpression.evaluate(lNode);
+	    		}
+		    	lValidValuesList.put(lKey,lValidValues);
+	    	}
 //	    	p(nodeList.item(i).getNodeValue());
 	    }
-	    return lValidValues;
+	    return lValidValuesList;
     }
     catch (XPathExpressionException e) {
 			throw new RuntimeException("Invalid xpath expression for validate check: "+pValidateCheckIndex,e);
     }
 	}
-	
-//	public static NodeList getHyperlinkNodeListForDoc(CachedFile pCachedFile)
-//	{
-//    if(pCachedFile.mHyperlinkNodeList == null) {
-//    	pCachedFile.mHyperlinkNodeList = getHyperlinkNodeListForDoc(pCachedFile.mDocElem);
-//    }
-//    return pCachedFile.mHyperlinkNodeList;
-//	}
-//	
-//	public static NodeList getHyperlinkNodeListForDoc(Element pDocElem, int pHyperlinkCheckIndex)
-//	{
-//		if(pHyperlinkCheckIndex>=mValidateChecks.length) {
-//			throw new RuntimeException("Invalid validateCheck index: "+pHyperlinkCheckIndex);
-//		}
-//    try
-//    {
-//    	NodeSet lCheckList = new NodeSet((NodeList) mHyperlinks[pHyperlinkCheckIndex][0].evaluate(pDocElem,XPathConstants.NODESET));
-//
-//	    return lCheckList;
-//    }
-//    catch (XPathExpressionException e) {
-//			throw new RuntimeException("Invalid xpath expression for hyperlink list",e);
-//    }
-//	}
 	
 	public static NodeList getCheckNodeListForDoc(CachedFile pCachedFile, int pValidateCheckIndex)
 	{
@@ -528,14 +518,14 @@ public class X {
 		}
     try
     {
-    	NodeSet lCheckList = new NodeSet((NodeList) mValidateChecks[pValidateCheckIndex][VALIDATE_CHECK_LIST].evaluate(pDocElem,XPathConstants.NODESET));
+    	NodeSet lCheckList = new NodeSet((NodeList) ((XPathExpression)mValidateChecks[pValidateCheckIndex][VALIDATE_CHECK_LIST]).evaluate(pDocElem,XPathConstants.NODESET));
     	if(pValidateCheckIndex==9){
     	p(lCheckList.size());
 //    	p(lCheckList.item(0).toString());
     	}
       if(mValidateChecks[pValidateCheckIndex][VALIDATE_EXCLUDE_LIST]!=null)
       {
-      	NodeList pExcludeList = (NodeList) mValidateChecks[pValidateCheckIndex][2].evaluate(pDocElem,XPathConstants.NODESET);
+      	NodeList pExcludeList = (NodeList) ((XPathExpression)mValidateChecks[pValidateCheckIndex][2]).evaluate(pDocElem,XPathConstants.NODESET);
       	for(int i=0;i<pExcludeList.getLength();i++) {
       		lCheckList.removeNode(pExcludeList.item(i));
       	}
@@ -610,13 +600,13 @@ public class X {
 					{
 						for (ValidOptions lDocValidOptions : lPossibleValues)
 						{
-							for (Map.Entry<String,Node> lPossibleValueEntry : lDocValidOptions.mValidValues.entrySet())
+							for (Map.Entry<String,ValidValues> lPossibleValueEntry : lDocValidOptions.mValidValues.entrySet())
 							{
 								String lPossibleValue = lPossibleValueEntry.getKey();
 								if ((pMatchString.length() == 0) || lPossibleValue.startsWith(pMatchString))
 								{
 									String lReplaceString = "\"" + lPossibleValue + "\"";
-									String lInfo = "<pre>"+(ds.serializeNode(lPossibleValueEntry.getValue()).replaceAll("&", "&amp;").replaceAll("<", "&lt;"))+"</pre>";
+									String lInfo = "<pre>"+(lPossibleValueEntry.getValue().mMessage.replaceAll("&", "&amp;").replaceAll("<", "&lt;"))+"</pre>";
 									lValidOptions.add(new String[]{lReplaceString,lInfo});
 								}
 							}
