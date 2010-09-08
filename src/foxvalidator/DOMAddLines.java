@@ -44,139 +44,136 @@ import org.w3c.dom.Node;
 
 public class DOMAddLines extends DOMParser {
 
-   /** Print writer. */
-   static private boolean NotIncludeIgnorableWhiteSpaces = false;
-   private XMLLocator locator; 
-   private String[] mLines;
- 	 private int mExtraOffset;
+	/** Print writer. */
+	static private boolean NotIncludeIgnorableWhiteSpaces = false;
+	private XMLLocator locator;
+	private String[] mLines;
+	private int mExtraOffset = 0;
 
-   public DOMAddLines() {
-  	 
-      //fNodeExpansion = FULL; // faster than: this.setFeature("http://apache.org/xml/features/defer-node-expansion", false);
+	public DOMAddLines() {
 
-      try {                        
-         this.setFeature( "http://apache.org/xml/features/dom/defer-node-expansion", false ); 
-      } catch ( org.xml.sax.SAXException e ) {
-         System.err.println( "except" + e );
-      }
-   } // constructor
-   
-   public void setLines(String[] pLines)
-   {
-  	 mLines = pLines;
-   }
+		try {                        
+			this.setFeature( "http://apache.org/xml/features/dom/defer-node-expansion", false ); 
+		} catch ( org.xml.sax.SAXException e ) {
+			System.err.println( "except" + e );
+		}
+	} // constructor
 
-   /* Methods that we override */
+	public void setLines(String[] pLines)
+	{
+		mLines = pLines;
+	}
 
-   /*   We override startElement callback  from DocumentHandler */
+	/* Methods that we override */
 
-   public void startElement(QName elementQName, XMLAttributes attrList, Augmentations augs) 
-    throws XNIException {
-      super.startElement(elementQName, attrList, augs);
+	/*   We override startElement callback  from DocumentHandler */
 
-      Node node = null;
-      try {
-      	node = (Node) this.getProperty( "http://apache.org/xml/properties/dom/current-element-node" );
-      	//System.out.println( "The node = " + node );  TODO JEFF
-      }
-      catch( org.xml.sax.SAXException ex )
-      {
-          System.err.println( "except" + ex );;
-      }
-      if( node != null )
-      {
-          node.setUserData( "startLine", String.valueOf( locator.getLineNumber() ), null ); // Save location String into node
-          node.setUserData("charOffset", String.valueOf( locator.getCharacterOffset()+mExtraOffset ), null );
-      }
-   } //startElement 
-   
-   @Override
-  protected void setCharacterData(boolean sawChars) {
-	  super.setCharacterData(sawChars);
-  }
-  
+	public void startElement(QName elementQName, XMLAttributes attrList, Augmentations augs) 
+	throws XNIException {
+		super.startElement(elementQName, attrList, augs);
+
+		Node node = null;
+		try {
+			node = (Node) this.getProperty( "http://apache.org/xml/properties/dom/current-element-node" );
+			//System.out.println( "The node = " + node );  TODO JEFF
+		}
+		catch( org.xml.sax.SAXException ex )
+		{
+			System.err.println( "except" + ex );;
+		}
+		if( node != null )
+		{
+			node.setUserData( "startLine", String.valueOf( locator.getLineNumber() ), null ); // Save location String into node
+			node.setUserData("charOffset", String.valueOf( locator.getCharacterOffset()+mExtraOffset ), null );
+		}
+	} //startElement 
+
+	@Override
+	protected void setCharacterData(boolean sawChars) {
+		super.setCharacterData(sawChars);
+	}
+
 	protected Attr createAttrNode(QName attrQName)
-   {
-  	 Attr a = super.createAttrNode(attrQName);
-  	 a.setUserData("startLine", String.valueOf( locator.getLineNumber() ), null );
- 		int lLineNumber = locator.getLineNumber();
- 		
- 		if(a.getName().equals("query"))
- 		{
- 			int x = 1;
- 		}
- 		
- 		int lCharOffset = (lLineNumber==-1?0:getLength(mLines,lLineNumber-1)+mLines[lLineNumber-1].indexOf('"',1+mLines[lLineNumber-1].indexOf('"',mLines[lLineNumber-1].indexOf(" "+a.getName()))));
- 		
- 		
- 		
-  	 a.setUserData("charOffset", String.valueOf( lCharOffset ), null ); //TODO: Get this to be the charOffset for the attribute not for the opening tag.
-  	 return a;
-   }
-   
-   protected Element createElementNode(QName elemQName)
-   {
-  	 Element e = super.createElementNode(elemQName);
-  	 e.setUserData("startLine", String.valueOf( locator.getLineNumber() ), null );
-  	 e.setUserData("charOffset", String.valueOf( locator.getCharacterOffset()+mExtraOffset ), null );
-  	 return e;
-   }
+	{
+		Attr a = super.createAttrNode(attrQName);
+		a.setUserData("startLine", String.valueOf( locator.getLineNumber() ), null );
+		int lLineNumber = locator.getLineNumber();
 
-   /* We override startDocument callback from DocumentHandler */
+		if(a.getName().equals("query"))
+		{
+			int x = 1;
+		}
 
-   @Override
-  public void characters(XMLString text, Augmentations augs) throws XNIException {
-	  super.characters(text, augs);
-	  fCurrentNode.getLastChild().setUserData( "startLine", String.valueOf( locator.getLineNumber() ), null );
-	  fCurrentNode.getLastChild().setUserData("charOffset", String.valueOf( locator.getCharacterOffset()+mExtraOffset ), null );
-  }
-   
-   @Override
-   public void comment(XMLString text, Augmentations augs) throws XNIException {
- 	  super.comment(text, augs);
- 	  fCurrentNode.getLastChild().setUserData( "startLine", String.valueOf( locator.getLineNumber() ), null );
- 	  fCurrentNode.getLastChild().setUserData("charOffset", String.valueOf( locator.getCharacterOffset()+mExtraOffset ), null );
-   }
-   
-   @Override
-   public void processingInstruction(String target, XMLString data, Augmentations augs) throws XNIException {
- 	  super.processingInstruction(target, data, augs);
- 	  fCurrentNode.getLastChild().setUserData( "startLine", String.valueOf( locator.getLineNumber() ), null );
- 	  fCurrentNode.getLastChild().setUserData("charOffset", String.valueOf( locator.getCharacterOffset()+mExtraOffset ), null );
-   }
+		int lCharOffset = (lLineNumber==-1?0:getLength(mLines,lLineNumber-1)+mLines[lLineNumber-1].indexOf('"',1+mLines[lLineNumber-1].indexOf('"',mLines[lLineNumber-1].indexOf(" "+a.getName()))));
 
-	public void startDocument(XMLLocator locator, String encoding, 
-                             NamespaceContext namespaceContext, Augmentations augs) throws XNIException {
-     super.startDocument(locator, encoding, namespaceContext, augs);
-     this.locator = locator;
-     Node node = null ;
-      try {
-        node = (Node) this.getProperty( "http://apache.org/xml/properties/dom/current-element-node" );
-      }
-     catch( org.xml.sax.SAXException ex )
-      {
-        System.err.println( "except" + ex );;
-      }
-     
-     if( node != null )
-     {
-          node.setUserData( "startLine", String.valueOf( locator.getLineNumber() ), null ); // Save location String into node
-          node.setUserData("charOffset", String.valueOf( locator.getCharacterOffset()+mExtraOffset ), null );
-     }
-  } //startDocument 
-   
 
-   public void ignorableWhitespace(XMLString text, Augmentations augs) throws XNIException
-    {
-    if(! NotIncludeIgnorableWhiteSpaces )
-       super.ignorableWhitespace( text, augs);
-    else
-       ;// Ignore ignorable white spaces
-    }// ignorableWhitespace
+
+		a.setUserData("charOffset", String.valueOf( lCharOffset ), null ); //TODO: Get this to be the charOffset for the attribute not for the opening tag.
+		return a;
+	}
+
+	protected Element createElementNode(QName elemQName)
+	{
+		Element e = super.createElementNode(elemQName);
+		e.setUserData("startLine", String.valueOf( locator.getLineNumber() ), null );
+		e.setUserData("charOffset", String.valueOf( locator.getCharacterOffset()+mExtraOffset ), null );
+		return e;
+	}
+
+	/* We override startDocument callback from DocumentHandler */
+
+	@Override
+	public void characters(XMLString text, Augmentations augs) throws XNIException {
+		super.characters(text, augs);
+		fCurrentNode.getLastChild().setUserData( "startLine", String.valueOf( locator.getLineNumber() ), null );
+		fCurrentNode.getLastChild().setUserData("charOffset", String.valueOf( locator.getCharacterOffset()+mExtraOffset ), null );
+	}
+
+	@Override
+	public void comment(XMLString text, Augmentations augs) throws XNIException {
+		super.comment(text, augs);
+		fCurrentNode.getLastChild().setUserData( "startLine", String.valueOf( locator.getLineNumber() ), null );
+		fCurrentNode.getLastChild().setUserData("charOffset", String.valueOf( locator.getCharacterOffset()+mExtraOffset ), null );
+	}
+
+	@Override
+	public void processingInstruction(String target, XMLString data, Augmentations augs) throws XNIException {
+		super.processingInstruction(target, data, augs);
+		fCurrentNode.getLastChild().setUserData( "startLine", String.valueOf( locator.getLineNumber() ), null );
+		fCurrentNode.getLastChild().setUserData("charOffset", String.valueOf( locator.getCharacterOffset()+mExtraOffset ), null );
+	}
+
+	public void startDocument(XMLLocator locator, String encoding, NamespaceContext namespaceContext, Augmentations augs) throws XNIException {
+		super.startDocument(locator, encoding, namespaceContext, augs);
+		this.locator = locator;
+		Node node = null ;
+		try {
+			node = (Node) this.getProperty( "http://apache.org/xml/properties/dom/current-element-node" );
+		}
+		catch( org.xml.sax.SAXException ex )
+		{
+			System.err.println( "except" + ex );;
+		}
+
+		if( node != null )
+		{
+			node.setUserData( "startLine", String.valueOf( locator.getLineNumber() ), null ); // Save location String into node
+			node.setUserData("charOffset", String.valueOf( locator.getCharacterOffset()+mExtraOffset ), null );
+		}
+	} //startDocument 
+
+
+	public void ignorableWhitespace(XMLString text, Augmentations augs) throws XNIException
+	{
+		if(! NotIncludeIgnorableWhiteSpaces )
+			super.ignorableWhitespace( text, augs);
+		else
+			;// Ignore ignorable white spaces
+	}// ignorableWhitespace
 
 	public void setExtraOffset(int pExtraOffset) {
-	  mExtraOffset = pExtraOffset;
-  }
-   
+		mExtraOffset = pExtraOffset;
+	}
+
 
 }

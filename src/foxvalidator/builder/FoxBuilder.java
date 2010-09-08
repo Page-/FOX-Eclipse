@@ -141,7 +141,7 @@ public class FoxBuilder extends IncrementalProjectBuilder
 			{
 				IFile lFile = (IFile) pResource;
 				deleteMarkers(lFile);
-				XMLErrorHandler reporter = new XMLErrorHandler(lFile);
+//				XMLErrorHandler reporter = new XMLErrorHandler(lFile);
 				try
 				{
 					CachedFile lCachedFile = getCachedFile(lFile);
@@ -237,36 +237,6 @@ public class FoxBuilder extends IncrementalProjectBuilder
 		}
 	}
 
-	class XMLErrorHandler extends DefaultHandler
-	{
-		private IFile mFile;
-
-		public XMLErrorHandler(IFile pFile)
-		{
-			this.mFile = pFile;
-		}
-
-		private void addMarker(SAXParseException pException, int pSeverity)
-		{
-			FoxBuilder.this.addMarker(mFile, pException.getMessage(), pException.getLineNumber(), pSeverity, 0,0, null);
-		}
-
-		public void error(SAXParseException pException) throws SAXException
-		{
-			addMarker(pException, IMarker.SEVERITY_ERROR);
-		}
-
-		public void fatalError(SAXParseException pException) throws SAXException
-		{
-			addMarker(pException, IMarker.SEVERITY_ERROR);
-		}
-
-		public void warning(SAXParseException pException) throws SAXException
-		{
-			addMarker(pException, IMarker.SEVERITY_WARNING);
-		}
-	}
-
 	public static final String BUILDER_ID = "FoxValidator.foxBuilder";
 
 	private static final String MARKER_TYPE = "FoxValidator.xmlProblem";
@@ -274,7 +244,7 @@ public class FoxBuilder extends IncrementalProjectBuilder
 	private SAXParserFactory mParserFactory;
 
 	public static final String FOX_RESOLUTIONS = "FOX_RESOLUTIONS";
-	private void addMarker(IFile pFile, String pMessage, int pLineNumber, int pSeverity, int pCharStart, int pCharEnd, List<String> pResolutions)
+	public static void addMarker(IFile pFile, String pMessage, int pLineNumber, int pSeverity, int pCharStart, int pCharEnd, List<String> pResolutions)
 	{
 		try
 		{

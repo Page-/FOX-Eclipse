@@ -50,6 +50,8 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import foxvalidator.builder.XMLErrorHandler;
+
 @SuppressWarnings("restriction")
 public class X {
 
@@ -280,6 +282,7 @@ public class X {
 				InputSource lFileContents = stringToInputSource(lHackedNamespacesString);
 				dal.setExtraOffset(lFileContentsString.length()-lHackedNamespacesString.length());
 				dal.setLines(lines);
+				dal.setErrorHandler(new XMLErrorHandler(pFile));
 				dal.parse(lFileContents);
   			lDocElem = dal.getDocument().getDocumentElement();
 	  	}
@@ -368,7 +371,6 @@ public class X {
 
 	public static XPathExpression mAllAttrsXPath;
 	public static XPathExpression mLibrariesXPath;
-//	public final static XPathExpression[][] mHyperlinks = new XPathExpression[2][2];
 	public final static XPathExpression[][] mValidateChecks = new XPathExpression[11][4];
 	public final static String[] mValidateCheckNames = {"Action","State","Database Interface","Query","Api","Storage Location","Mapset","Template","Entry Theme","Module","Buffer"};
 	
@@ -391,12 +393,6 @@ public class X {
 			
 			mLibrariesXPath = mXPath.compile("//fm:name/text() | //fm:library/text()");// "//fm:name/text()" included so that current module is also loaded in
 
-//			mHyperlinks[0][0] = mXPath.compile("//fm:library[text()]");
-//			mHyperlinks[0][1] = mXPath.compile("//fm:name[text()]");
-//
-//			mHyperlinks[1][0] = mXPath.compile("//fm:action");
-//			mHyperlinks[1][1] = mXPath.compile("//@action | //@callback-action | "+foxify("//@fox:change-action | //@fox:action | //@fox:upload-success-action | //@fox:upload-fail-action | //@fox:navAction"));
-			
 			mValidateChecks[0][VALIDATE_VALID_VALUES_LIST] = mXPath.compile("@name");
 			for(int i=1;i<mValidateChecks.length;i++)
 			{
