@@ -530,13 +530,9 @@ public class X {
     try
     {
     	NodeSet lCheckList = new NodeSet((NodeList) ((XPathExpression)mValidateChecks[pValidateCheckIndex][VALIDATE_CHECK_LIST]).evaluate(pDocElem,XPathConstants.NODESET));
-    	if(pValidateCheckIndex==9){
-    	p(lCheckList.size());
-//    	p(lCheckList.item(0).toString());
-    	}
       if(mValidateChecks[pValidateCheckIndex][VALIDATE_EXCLUDE_LIST]!=null)
       {
-      	NodeList pExcludeList = (NodeList) ((XPathExpression)mValidateChecks[pValidateCheckIndex][2]).evaluate(pDocElem,XPathConstants.NODESET);
+      	NodeList pExcludeList = (NodeList) ((XPathExpression)mValidateChecks[pValidateCheckIndex][VALIDATE_EXCLUDE_LIST]).evaluate(pDocElem,XPathConstants.NODESET);
       	for(int i=0;i<pExcludeList.getLength();i++) {
       		lCheckList.removeNode(pExcludeList.item(i));
       	}
