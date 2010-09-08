@@ -499,6 +499,9 @@ public class X {
 	    		}
 	    		else {
 	    			lKey = lXPathExpression.evaluate(lNode);
+	    			if(lKey.startsWith("/")) {
+	    				continue;
+	    			}
 	    		}
 		    	lValidValuesList.put(lKey,lValidValues);
 	    	}
