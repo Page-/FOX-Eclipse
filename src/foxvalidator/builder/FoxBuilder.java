@@ -165,7 +165,7 @@ public class FoxBuilder extends IncrementalProjectBuilder
 			      	Node lNode = lNodeList.item(i);
 			      	if(!lValidValues.contains(lNode.getTextContent()))
 			      	{
-			      		p("Invalid "+mValidateCheckNames[x]+": "+lNode.getTextContent());
+			      		p("Invalid "+mValidateChecks[x][VALIDATE_CHECK_NAME]+": "+lNode.getTextContent());
 //			      		StringWriter sw = new StringWriter();
 //			      		d.serializeNode(nodeList.item(i), sw, "");
 //			      		p(sw.toString());
@@ -180,7 +180,7 @@ public class FoxBuilder extends IncrementalProjectBuilder
 			      		int lCharEnd = (lLineNumber==-1?0:lCharStart + lNode.getTextContent().length());
 			      		/*END COPYPASTA1*/
 			      		p(lLineNumber);
-			      		addMarker(lFile, mValidateCheckNames[x]+" '"+lNode.getTextContent()+"' not found.", lLineNumber, IMarker.SEVERITY_WARNING, lCharStart, lCharEnd, lValidValues);
+			      		addMarker(lFile, mValidateChecks[x][VALIDATE_CHECK_NAME]+" '"+lNode.getTextContent()+"' not found.", lLineNumber, IMarker.SEVERITY_WARNING, lCharStart, lCharEnd, lValidValues);
 			      	}
 //			      	p(nodeList.item(i).getTextContent());
 			      }

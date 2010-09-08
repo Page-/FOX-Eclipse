@@ -371,16 +371,16 @@ public class X {
 
 	public static XPathExpression mAllAttrsXPath;
 	public static XPathExpression mLibrariesXPath;
-	public final static Object[][] mValidateChecks = new Object[11][4];
-	public final static String[] mValidateCheckNames = {"Action","State","Database Interface","Query","Api","Storage Location","Mapset","Template","Entry Theme","Module","Buffer"};
+	public final static Object[][] mValidateChecks = new Object[11][5];
 	
 	//temp
 	protected final static XPath mXPath;
 
-	protected final static int VALIDATE_VALID_DEFINITION_LIST = 0;
-	protected final static int VALIDATE_CHECK_LIST = 1;
-	protected final static int VALIDATE_EXCLUDE_LIST = 2;
-	protected final static int VALIDATE_VALID_VALUES_LIST = 3;
+	public final static int VALIDATE_CHECK_NAME = 0;
+	protected final static int VALIDATE_VALID_DEFINITION_LIST = 1;
+	protected final static int VALIDATE_CHECK_LIST = 2;
+	protected final static int VALIDATE_EXCLUDE_LIST = 3;
+	protected final static int VALIDATE_VALID_VALUES_LIST = 4;
 	
 	static
 	{
@@ -393,6 +393,7 @@ public class X {
 			
 			mLibrariesXPath = mXPath.compile("//fm:name/text() | //fm:library/text()");// "//fm:name/text()" included so that current module is also loaded in
 			
+			mValidateChecks[0][VALIDATE_CHECK_NAME] = "Action";
 			mValidateChecks[0][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:action");
 			mValidateChecks[0][VALIDATE_CHECK_LIST] = mXPath.compile("//@action | //@callback-action | "+foxify("//@fox:change-action | //@fox:action | //@fox:upload-success-action | //@fox:upload-fail-action | //@fox:navAction"));
 			mValidateChecks[0][VALIDATE_EXCLUDE_LIST] = mXPath.compile("//fm:state/@action");
@@ -400,15 +401,18 @@ public class X {
 																														mXPath.compile("@name"),
 																														mXPath.compile("concat(ancestor-or-self::fm:state/@name,'/',@name)")
 																													};
-			
+
+			mValidateChecks[1][VALIDATE_CHECK_NAME] = "Buffer";
 			mValidateChecks[1][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:set-buffer[@name]");
 			mValidateChecks[1][VALIDATE_CHECK_LIST] = mXPath.compile("//fm:include/@name");
 			mValidateChecks[1][VALIDATE_VALID_VALUES_LIST] = mValidateChecks[0][VALIDATE_VALID_VALUES_LIST];
-			
+
+			mValidateChecks[2][VALIDATE_CHECK_NAME] = "Module";
 			mValidateChecks[2][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:name[text()]");
 			mValidateChecks[2][VALIDATE_CHECK_LIST] = mXPath.compile("//@module | //fm:library/text()");
 			mValidateChecks[2][VALIDATE_VALID_VALUES_LIST] = (Object) new XPathExpression[] {mXPath.compile("text()")};
-			
+
+			mValidateChecks[3][VALIDATE_CHECK_NAME] = "State";
 			mValidateChecks[3][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:state[not(@action) and boolean(@name)]");
 			mValidateChecks[3][VALIDATE_CHECK_LIST] = mXPath.compile("//fm:entry-theme/fm:state/text() | //@state | //fm:state/@name | //fm:state-replace/@name | //fm:state-push/@name");
 			mValidateChecks[3][VALIDATE_VALID_VALUES_LIST] = (Object) new XPathExpression[] {mXPath.compile("@name")};
@@ -417,25 +421,32 @@ public class X {
 			{
 				mValidateChecks[i][VALIDATE_VALID_VALUES_LIST] = mValidateChecks[3][VALIDATE_VALID_VALUES_LIST]; //Reuse the same compiled XPath object.
 			}
-			
+
+			mValidateChecks[4][VALIDATE_CHECK_NAME] = "Database Interface";
 			mValidateChecks[4][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:db-interface[@name]");
 			mValidateChecks[4][VALIDATE_CHECK_LIST] = mXPath.compile("//@interface");
-			
+
+			mValidateChecks[5][VALIDATE_CHECK_NAME] = "Query";
 			mValidateChecks[5][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:query[@name]");
 			mValidateChecks[5][VALIDATE_CHECK_LIST] = mXPath.compile("//@query");
-			
+
+			mValidateChecks[6][VALIDATE_CHECK_NAME] = "Api";
 			mValidateChecks[6][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:api[@name]");
 			mValidateChecks[6][VALIDATE_CHECK_LIST] = mXPath.compile("//@api");
-			
+
+			mValidateChecks[7][VALIDATE_CHECK_NAME] = "Storage Location";
 			mValidateChecks[7][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:storage-location[@name]");
 			mValidateChecks[7][VALIDATE_CHECK_LIST] = mXPath.compile("//fm:map-set/fm:storage-location/text()");
-			
+
+			mValidateChecks[8][VALIDATE_CHECK_NAME] = "Mapset";
 			mValidateChecks[8][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:map-set[@name]");
 			mValidateChecks[8][VALIDATE_CHECK_LIST] = mXPath.compile(foxify("//@fox:map-set"));
-			
+
+			mValidateChecks[9][VALIDATE_CHECK_NAME] = "Template";
 			mValidateChecks[9][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:template[@name]");
 			mValidateChecks[9][VALIDATE_CHECK_LIST] = mXPath.compile("//@template");
-			
+
+			mValidateChecks[10][VALIDATE_CHECK_NAME] = "Entry Theme";
 			mValidateChecks[10][VALIDATE_VALID_DEFINITION_LIST] = mXPath.compile("//fm:entry-theme[@name]");
 			mValidateChecks[10][VALIDATE_CHECK_LIST] = mXPath.compile("//@theme");
     }
